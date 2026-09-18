@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GTL Motors — Find your next car</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+<style>
+  @font-face{
+    font-family:'Cider Gum';
+    src:url('gomarice_cider_gum.ttf') format('truetype');
+    font-weight:400;
+    font-style:normal;
+    font-display:swap;
+  }
+  :root{
+    --bg:#0e0e0f;
+    --bg-alt:#17181a;
+    --bg-alt-2:#1e1f21;
+    --ink:#f3f0e9;
+    --ink-dim:#9a9c9e;
+    --brass:#c9a24b;
+    --line: rgba(243,240,233,0.12);
+    --line-strong: rgba(243,240,233,0.22);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden;
+  }
+  h1,h2,h3, .num, .display{
+    font-family:'Cider Gum','Barlow Condensed',sans-serif;
+    font-weight:400;letter-spacing:0.015em;margin:0;
+  }
+  a{color:inherit;text-decoration:none;}
+  img{max-width:100%;display:block;}
+  ::selection{background:var(--brass);color:#141414;}
+  :focus-visible{outline:2px solid var(--brass);outline-offset:3px;}
+
+  /* ---------- SCROLL FLOAT (per-character scroll-scrubbed reveal) ---------- */
+  .sf-char{display:inline-block;will-change:transform,opacity;}
+
+  .wrap{max-width:1240px;margin:0 auto;padding:0 32px;}
+  @media (max-width:640px){.wrap{padding:0 20px;}}
+
+  /* ---------- NAV ---------- */
+  header{
+    position:sticky;top:0;z-index:40;
+    background:rgba(14,14,15,0.82);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  nav{display:flex;align-items:center;justify-content:space-between;padding:20px 0;}
+  .logo{
+    font-family:'Cider Gum','Barlow Condensed',sans-serif;
+    font-weight:400;font-size:20px;letter-spacing:0.02em;
+    display:flex;align-items:center;gap:9px;
+  }
+  .logo .mark{width:11px;height:11px;background:var(--brass);transform:rotate(45deg);}
+  .nav-links{display:flex;gap:34px;font-size:15px;color:var(--ink-dim);}
+  .nav-links a:hover{color:var(--ink);}
+  .nav-cta{
+    font-size:14px;font-weight:600;padding:11px 20px;
+    border:1px solid var(--line-strong);border-radius:2px;
+    transition:border-color .2s, background .2s;
+  }
+  .nav-cta:hover{border-color:var(--brass);background:rgba(201,162,75,0.08);}
+  @media (max-width:800px){ .nav-links{display:none;} }
+
+  /* ---------- HERO ---------- */
+  .hero{position:relative;}
+  .hero-media{
+    position:relative;min-height:92vh;overflow:hidden;
+    display:flex;align-items:flex-end;
+  }
+  .hero-bg{position:absolute;top:-8%;left:0;width:100%;height:116%;object-fit:cover;will-change:transform;}
+  .hero-media.bg-missing{background:linear-gradient(160deg, var(--bg-alt) 0%, var(--bg) 70%);}
+  .hero-media.bg-missing .hero-bg{display:none;}
+  .hero-overlay{
+    position:absolute;inset:0;
+    background:linear-gradient(180deg, rgba(10,10,10,0.15) 0%, rgba(8,8,8,0.35) 45%, rgba(6,6,6,0.92) 100%);
+  }
+  .hero-content{
+    position:relative;z-index:2;width:100%;max-width:1600px;
+    margin:0 auto 0 0;padding:140px 32px 56px clamp(24px, 4vw, 64px);
+  }
+  .hero h1{
+    font-size:clamp(36px, 5.4vw, 68px);line-height:1.04;
+    letter-spacing:0.01em;color:var(--ink);max-width:14ch;
+  }
+  .hero-sub{margin-top:20px;max-width:44ch;color:#d8d5cd;font-size:16px;line-height:1.6;}
+  .btn-primary{
+    background:var(--brass);color:#161514;font-weight:600;font-size:15px;
+    padding:14px 26px;border-radius:999px;display:inline-block;
+    transition:transform .25s ease, background .25s ease;
+    cursor: pointer;
+  }
+  .btn-primary:hover{background:#dcb762;transform:translateY(-2px);}
+  .btn-ghost{
+    border:1px solid var(--line-strong);font-weight:600;font-size:15px;
+    padding:14px 26px;border-radius:2px;color:var(--ink);
+    background:transparent;
+    transition:border-color .2s, background .2s;
+    cursor: pointer;
+  }
+  .btn-ghost:hover{border-color:var(--brass);}
+
+  .hero-bottom-row{
+    margin-top:64px;display:flex;justify-content:space-between;align-items:flex-end;
+    gap:40px;flex-wrap:wrap;border-top:1px solid rgba(243,240,233,0.16);padding-top:26px;
+  }
+  .hero-stats-mini{display:flex;gap:44px;flex-wrap:wrap;}
+  .hsm-item{display:flex;gap:14px;align-items:flex-start;max-width:220px;}
+  .hsm-num{font-family:'Cider Gum','Barlow Condensed',sans-serif;font-weight:400;font-size:26px;color:var(--brass);}
+  .hsm-item p{margin:0;font-size:14px;color:var(--ink);line-height:1.5;}
+  .hsm-item p span{display:block;font-size:12.5px;color:var(--ink-dim);margin-top:3px;}
+
+  .hero-explore{width:100%;max-width:380px;}
+  .explore-head{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:12px;font-size:13px;color:var(--ink-dim);
+  }
+  .explore-arrows{display:flex;gap:8px;}
+  .explore-arrows button{
+    width:30px;height:30px;border-radius:50%;border:1px solid var(--line-strong);
+    background:rgba(255,255,255,0.03);color:var(--ink);font-size:16px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:border-color .2s, background .2s;
+  }
+  .explore-arrows button:hover{border-color:var(--brass);background:rgba(201,162,75,0.1);}
+  .explore-window{overflow:hidden;}
+  .explore-track{display:flex;gap:12px;transition:transform .4s cubic-bezier(.4,0,.2,1);}
+  .explore-card{
+    flex-shrink:0;width:100%;max-width:380px;
+    background:rgba(23,24,26,0.72);backdrop-filter:blur(8px);
+    border:1px solid var(--line);border-radius:6px;padding:12px;
+    display:flex;gap:12px;align-items:center;
+  }
+  .explore-card .photo-slot{width:64px;height:64px;flex-shrink:0;border-radius:4px;}
+  .explore-card .photo-slot::after{font-size:9px;padding:4px;}
+  .explore-card-body{flex:1;min-width:0;}
+  .explore-card-body h4{font-size:16px;font-family:'Inter',sans-serif;font-weight:600;margin:0;}
+  .explore-card-body p{font-size:12.5px;color:var(--ink-dim);margin:3px 0 8px;line-height:1.4;}
+  .explore-card-body a{font-size:12px;font-weight:600;color:var(--brass);}
+  .explore-card-body a:hover{text-decoration:underline;}
+
+  @media (max-width:760px){
+    .hero-content{padding-top:100px;padding-left:24px;padding-right:24px;}
+    .hero-bottom-row{flex-direction:column;align-items:stretch;}
+    .hero-explore{max-width:none;}
+    .section-head-right{align-items:flex-start;}
+    .section-head p{text-align:left;}
+  }
+
+  /* ---------- SHOWROOM ---------- */
+  .showroom{padding:120px 0;border-top:1px solid var(--line);position:relative;overflow:hidden;}
+  .showroom-bg{position:absolute;inset:0;z-index:0;}
+  .showroom-bg video{width:100%;height:100%;object-fit:cover;}
+  .showroom-bg::after{
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(180deg, rgba(14,14,15,0.82) 0%, rgba(14,14,15,0.94) 100%);
+  }
+  .showroom-bg.bg-missing video{display:none;}
+  .showroom-bg.bg-missing::after{background:var(--bg);}
+  .showroom > .wrap{position:relative;z-index:1;}
+
+  .section-head{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    margin-bottom:56px;gap:24px;flex-wrap:wrap;
+  }
+  .section-head h2{font-size:clamp(32px,4vw,48px);max-width:16ch;}
+  .section-head-right{display:flex;flex-direction:column;align-items:flex-end;gap:14px;}
+  .section-head p{color:var(--ink-dim);font-size:15px;max-width:34ch;line-height:1.6;text-align:right;}
+  .watch-trailer-btn{
+    display:inline-flex;align-items:center;gap:9px;white-space:nowrap;
+    background:rgba(255,255,255,0.04);
+  }
+  .watch-trailer-btn .play-ico{
+    width:20px;height:20px;border-radius:50%;background:var(--brass);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .watch-trailer-btn .play-ico svg{width:8px;height:8px;margin-left:1px;}
+
+  .trailer-modal{
+    position:fixed;inset:0;z-index:100;background:rgba(6,6,6,0.94);
+    display:none;align-items:center;justify-content:center;padding:32px;
+  }
+  .trailer-modal.is-open{display:flex;}
+  .trailer-modal video{width:100%;max-width:1100px;max-height:82vh;border-radius:4px;background:#000;}
+  .trailer-close{
+    position:absolute;top:24px;right:24px;width:40px;height:40px;border-radius:50%;
+    background:rgba(255,255,255,0.06);border:1px solid var(--line-strong);color:var(--ink);
+    font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  }
+  .trailer-close:hover{border-color:var(--brass);}
+
+  .showroom-grid{
+    display:grid;grid-template-columns:1fr 0.62fr;gap:0;
+    border:1px solid var(--line);border-radius:2px;overflow:hidden;
+  }
+  @media (max-width:860px){ .showroom-grid{grid-template-columns:1fr;} }
+
+  .showroom-preview{
+    background:var(--bg-alt);padding:44px;min-height:440px;
+    display:flex;flex-direction:column;justify-content:space-between;
+    border-right:1px solid var(--line);
+  }
+  @media (max-width:860px){ .showroom-preview{border-right:none;border-bottom:1px solid var(--line);} }
+
+  .preview-info h3{font-size:32px;}
+  .preview-info .price{color:var(--brass);font-size:18px;font-weight:600;margin-top:4px;font-family:'Inter',sans-serif;}
+  .preview-specs{display:flex;gap:28px;margin-top:20px;}
+  .preview-specs .v{font-family:'Cider Gum','Barlow Condensed',sans-serif;font-weight:400;font-size:20px;color:var(--ink);}
+  .preview-specs .k{font-size:12px;color:var(--ink-dim);margin-top:2px;}
+
+  .model-list{list-style:none;margin:0;padding:0;}
+  
+  /* NEW HOVER STATES */
+  .model-item {
+    padding: 24px 32px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+  .model-item::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 3px;
+    background: var(--brass);
+    transform: scaleY(0);
+    transition: transform 0.3s ease;
+    transform-origin: bottom;
+  }
+  .model-item:last-child { border-bottom: none; }
+  .model-item .m-name { font-size: 18px; font-family:'Cider Gum','Barlow Condensed',sans-serif; font-weight:400; transition: transform 0.3s ease; }
+  .model-item .m-type { font-size: 13px; color: var(--ink-dim); transition: transform 0.3s ease; }
+
+  .model-item.is-active, .model-item:hover { background: var(--bg-alt-2); }
+  .model-item.is-active .m-name, .model-item:hover .m-name { color: var(--brass); transform: translateX(8px); }
+  .model-item.is-active .m-type, .model-item:hover .m-type { transform: translateX(8px); }
+  .model-item.is-active::before { transform: scaleY(1); }
+
+  /* ---------- DRIVE ---------- */
+  .drive-section{padding:60px 0 0;border-top:1px solid var(--line);overflow:hidden;}
+  .drive-head h2{font-size:clamp(54px,10vw,150px);line-height:0.9;}
+  .drive-head h2 em{font-style:normal;color:var(--brass);}
+  .drive-sub{color:var(--ink-dim);max-width:44ch;font-size:16px;line-height:1.6;margin-top:20px;}
+
+  .drive-pin{height:100vh;position:relative;background:var(--bg-alt);}
+  .drive-pin-inner{position:sticky;top:0;height:100vh;display:flex;align-items:center;overflow:hidden;}
+  .drive-track{display:flex;gap:28px;padding-left:32px;}
+  .drive-card{
+    flex-shrink:0;width:340px;height:420px;background:var(--bg-alt);
+    border:1px solid var(--line);border-radius:2px;padding:30px;
+    display:flex;flex-direction:column;justify-content:space-between;
+  }
+  .drive-card .tag{font-size:12px;color:var(--brass);letter-spacing:0.06em;}
+  .drive-card h3{font-size:34px;margin-top:10px;}
+  .drive-card .photo-slot{height:150px;margin:4px 0;}
+  .drive-card .photo-slot img{object-fit:contain;padding:8px;}
+  .drive-card p{color:var(--ink-dim);font-size:14px;line-height:1.5;}
+
+  .drive-fallback{display:none;gap:20px;overflow-x:auto;padding:0 20px 30px;scroll-snap-type:x mandatory;}
+  .drive-fallback::-webkit-scrollbar{display:none;}
+  .drive-fallback .drive-card{scroll-snap-align:start;width:260px;height:auto;}
+  @media (max-width:900px){.drive-pin{display:none;}.drive-fallback{display:flex;}}
+
+  /* ---------- 3D VIEWER SECTION ---------- */
+  .moments{padding:120px 0;border-top:1px solid var(--line);}
+  .moments-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:40px;align-items:center;}
+  @media (max-width:860px){.moments-grid{grid-template-columns:1fr;}}
+  
+  .viewer-container model-viewer {
+    width: 100%;
+    height: 500px;
+    background-color: var(--bg-alt);
+    border-radius: 4px;
+    border: 1px solid var(--line);
+    --poster-color: transparent;
+  }
+
+  .moments-copy{display:flex;flex-direction:column;justify-content:center;}
+  .moments-copy h2{font-size:clamp(30px,3.6vw,44px);max-width:14ch;}
+  .moments-copy p{color:var(--ink-dim);margin-top:18px;line-height:1.7;font-size:16px;max-width:38ch;}
+
+  /* ---------- FOOTER ---------- */
+  footer{border-top:1px solid var(--line);padding-top:60px;}
+  .partners{overflow:hidden;border-bottom:1px solid var(--line);padding-bottom:50px;}
+  .partners-track{
+    display:flex;gap:64px;white-space:nowrap;animation:marquee 26s linear infinite;
+    font-family:'Cider Gum','Barlow Condensed',sans-serif;font-weight:400;font-size:20px;color:var(--ink-dim);
+  }
+  @keyframes marquee{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+
+  .footer-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:40px;padding:56px 0;}
+  @media (max-width:760px){.footer-grid{grid-template-columns:1fr;}}
+  .footer-grid h4{font-size:14px;color:var(--ink-dim);font-weight:500;margin-bottom:16px;font-family:'Inter',sans-serif;}
+  .footer-grid ul{list-style:none;margin:0;padding:0;}
+  .footer-grid li{margin-bottom:10px;font-size:15px;}
+  .footer-bottom{
+    border-top:1px solid var(--line);padding:24px 0 40px;
+    display:flex;justify-content:space-between;color:var(--ink-dim);font-size:13px;flex-wrap:wrap;gap:10px;
+  }
+
+  /* ---------- PHOTO SLOTS ---------- */
+  .photo-slot{position:relative;overflow:hidden;background:var(--bg-alt);border:1px solid var(--line);}
+  .photo-slot img{width:100%;height:100%;object-fit:cover;display:block;}
+  .photo-slot.is-empty{border:1px dashed var(--line-strong);}
+  .photo-slot.is-empty img{display:none;}
+  .photo-slot::after{
+    content:attr(data-label);position:absolute;inset:0;display:none;
+    align-items:center;justify-content:center;text-align:center;
+    padding:16px;font-size:12px;color:var(--ink-dim);
+  }
+  .photo-slot.is-empty::after{display:flex;}
+
+  .preview-photo{width:100%;height:280px;border-radius:2px;margin-bottom:8px;}
+  .preview-photo img{object-fit:contain;padding:12px;}
+  .drive-bg{position:absolute;inset:0;z-index:0;border:none;}
+  .drive-bg::before{
+    content:"";position:absolute;inset:0;z-index:1;
+    background:linear-gradient(180deg, rgba(14,14,15,0.55) 0%, rgba(14,14,15,0.88) 100%);
+  }
+  .drive-pin-inner, .drive-track{position:relative;z-index:2;}
+</style>
+</head>
+<body>
+
+<header>
+  <nav class="wrap">
+    <div class="logo"><span class="mark"></span>GTL Motors</div>
+    <div class="nav-links">
+      <a href="#showroom">Showroom</a>
+      <a href="#drive">Test drives</a>
+      <a href="#moments">3D View</a>
+      <a href="#contact">Contact</a>
+    </div>
+    <a href="#contact" class="nav-cta">Book a test drive</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <div class="hero-media">
+    <img class="hero-bg" src="hero_page.png" alt="" onerror="this.closest('.hero-media').classList.add('bg-missing')">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <h1 id="hero-h1">Reliable, Ready,<br>Built To Move You.</h1>
+      <p class="hero-sub">Every vehicle on our floor is inspected, fairly priced, and ready for a test drive today.</p>
+      <a href="#showroom" class="btn-primary">Book A Test Drive</a>
+
+      <div class="hero-bottom-row">
+        <div class="hero-stats-mini">
+          <div class="hsm-item">
+            <span class="hsm-num">01</span>
+            <p>140+ vehicles in stock<span>New and pre-owned, updated weekly.</span></p>
+          </div>
+          <div class="hsm-item">
+            <span class="hsm-num">02</span>
+            <p>48-hour handover<span>Paperwork to keys, fast.</span></p>
+          </div>
+        </div>
+
+        <div class="hero-explore">
+          <div class="explore-head">
+            <span>Explore</span>
+            <div class="explore-arrows">
+              <button type="button" id="explore-prev" aria-label="Previous model">‹</button>
+              <button type="button" id="explore-next" aria-label="Next model">›</button>
+            </div>
+          </div>
+          <div class="explore-window">
+            <div class="explore-track" id="explore-track"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="showroom" id="showroom">
+  <div class="showroom-bg" id="showroom-bg">
+    <video id="showroom-video" data-src="GTL_motors_trailer.mp4"
+           muted loop playsinline preload="none"
+           onerror="this.closest('.showroom-bg').classList.add('bg-missing')"></video>
+  </div>
+  <div class="wrap">
+    <div class="section-head">
+      <h2>On the floor this month</h2>
+      <div class="section-head-right">
+        <p>Select any model to view its specifications and overview.</p>
+        <button type="button" class="btn-ghost watch-trailer-btn" id="watch-trailer-btn">
+          <span class="play-ico"><svg viewBox="0 0 10 10"><polygon points="0,0 10,5 0,10" fill="#161514"/></svg></span>
+          Watch trailer
+        </button>
+      </div>
+    </div>
+
+    <div class="showroom-grid">
+      <div class="showroom-preview">
+        <div class="photo-slot preview-photo" id="preview-photo" data-label="Model photo">
+          <img id="preview-img" src="" alt="" loading="lazy" onerror="this.closest('.photo-slot').classList.add('is-empty')">
+        </div>
+        <div class="preview-info">
+          <h3 id="preview-name">Suzuki Brezza</h3>
+          <div class="price" id="preview-price">From SCR 385,000</div>
+          <div class="preview-specs">
+            <div><span class="v" id="spec-power">75 kW</span><span class="k">Power</span></div>
+            <div><span class="v" id="spec-speed">165 km/h</span><span class="k">Top speed</span></div>
+            <div><span class="v" id="spec-type">Compact SUV</span><span class="k">Body style</span></div>
+          </div>
+        </div>
+      </div>
+
+      <ul class="model-list" id="model-list"></ul>
+    </div>
+  </div>
+</section>
+
+<section class="drive-section" id="drive">
+  <div class="drive-head">
+    <div class="wrap">
+      <h2>Weekend<br>test <em>drives</em>.</h2>
+      <p class="drive-sub">Every Saturday, take three models back to back with one of our team. No appointment fee, no pressure.</p>
+    </div>
+  </div>
+
+  <div class="drive-pin">
+    <div class="photo-slot drive-bg" data-label="drive-day-bg.jpg">
+      <img src="drive-day-bg.jpg" alt="" loading="lazy" onerror="this.closest('.photo-slot').classList.add('is-empty')">
+    </div>
+    <div class="drive-pin-inner">
+      <div class="drive-track" id="drive-track"></div>
+    </div>
+  </div>
+  <div class="drive-fallback" id="drive-fallback"></div>
+</section>
+
+<section class="moments" id="moments">
+  <div class="wrap moments-grid">
+    <div class="viewer-container">
+      <model-viewer 
+        src="3d-models/toyota_yaris_cross_2025.glb" 
+        ar 
+        camera-controls 
+        auto-rotate 
+        shadow-intensity="1" 
+        environment-image="neutral"
+        exposure="1.1">
+      </model-viewer>
+    </div>
+    <div class="moments-copy">
+      <h2>Inspect every angle in 3D.</h2>
+      <p>Rotate, zoom, and explore the Toyota Yaris Cross structure up close right on your screen before booking your test drive.</p>
+      
+      <!-- NEW CAMERA PRESETS -->
+      <div class="camera-controls" style="display:flex; gap:12px; margin-top:20px; flex-wrap:wrap;">
+        <button class="btn-ghost" onclick="setCamera('0deg 75deg 105%')">Front</button>
+        <button class="btn-ghost" onclick="setCamera('90deg 75deg 105%')">Profile</button>
+        <button class="btn-ghost" onclick="setCamera('45deg 60deg 70%')">Close-up</button>
+      </div>
+
+      <a href="#contact" class="btn-primary" style="margin-top:26px; align-self:flex-start;">Book Test Drive</a>
+    </div>
+  </div>
+</section>
+
+<footer id="contact">
+  <div class="wrap partners">
+    <div class="partners-track" id="partners-track"></div>
+  </div>
+
+  <div class="wrap footer-grid">
+    <div>
+      <div class="logo"><span class="mark"></span>GTL Motors</div>
+      <p style="color:var(--ink-dim);font-size:14px;margin-top:16px;max-width:36ch;line-height:1.6;">
+        New and pre-owned vehicles, financing, and servicing — handled by one team.
+      </p>
+    </div>
+    <div>
+      <h4>Visit</h4>
+      <ul>
+        <li>Showroom &amp; workshop</li>
+        <li>Mon–Sat, 8:30–17:30</li>
+        <li>+000 000 0000</li>
+      </ul>
+    </div>
+    <div>
+      <h4>Explore</h4>
+      <ul>
+        <li><a href="#showroom">Current inventory</a></li>
+        <li><a href="#drive">Test drive weekends</a></li>
+        <li><a href="#moments">3D View</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="wrap footer-bottom">
+    <span>© 2026 GTL Motors</span>
+    <span>Financing subject to approval</span>
+  </div>
+</footer>
+
+<div class="trailer-modal" id="trailer-modal">
+  <button type="button" class="trailer-close" id="trailer-close" aria-label="Close trailer">&times;</button>
+  <video id="trailer-modal-video" src="GTL_motors_trailer.mp4" controls playsinline preload="none"></video>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>
+/* ---------- showroom trailer: silent bg loop + fullscreen-with-sound modal ---------- */
+const trailerModal = document.getElementById('trailer-modal');
+const trailerModalVideo = document.getElementById('trailer-modal-video');
+const bgVideo = document.getElementById('showroom-video');
+
+/* Ambient bg loop is a nice-to-have, not essential — skip it entirely on
+   mobile/touch to avoid burning cellular data on a 77MB file, and even on
+   desktop don't fetch it until the showroom section is actually in view. */
+const skipAmbientVideo = window.innerWidth < 900 || navigator.maxTouchPoints > 0;
+let bgVideoLoaded = false;
+
+if (bgVideo && !skipAmbientVideo && 'IntersectionObserver' in window) {
+  const bgVideoObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        if (!bgVideoLoaded) { bgVideo.src = bgVideo.dataset.src; bgVideoLoaded = true; }
+        bgVideo.play().catch(() => {});
+      } else {
+        bgVideo.pause();
+      }
+    });
+  }, { threshold: 0.15 });
+  bgVideoObserver.observe(document.getElementById('showroom'));
+} else if (bgVideo) {
+  // no ambient loop on this device/browser — just show the dark panel
+  document.getElementById('showroom-bg').classList.add('bg-missing');
+}
+
+document.getElementById('watch-trailer-btn').addEventListener('click', () => {
+  trailerModal.classList.add('is-open');
+  trailerModalVideo.currentTime = 0;
+  trailerModalVideo.play();
+  if (bgVideo) bgVideo.pause();
+});
+function closeTrailer(){
+  trailerModal.classList.remove('is-open');
+  trailerModalVideo.pause();
+  if (bgVideo && bgVideoLoaded) bgVideo.play().catch(() => {});
+}
+document.getElementById('trailer-close').addEventListener('click', closeTrailer);
+trailerModal.addEventListener('click', (e) => { if (e.target === trailerModal) closeTrailer(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeTrailer(); });
+
+const MODELS = [
+  { name:"Suzuki Brezza", type:"Compact SUV", price:"From SCR 385,000", power:"75 kW", speed:"165 km/h", blurb:"Efficient, upright, easy to see out of.", image:"susuki_brezza.avif" },
+  { name:"Suzuki Victoris", type:"Mid-size SUV", price:"From SCR 460,000", power:"90 kW", speed:"180 km/h", blurb:"Suzuki's flagship SUV, tuned for longer trips.", image:"suzuki_victoris.webp" },
+  { name:"Toyota Yaris Cross", type:"Compact SUV", price:"From SCR 430,000", power:"88 kW", speed:"175 km/h", blurb:"Toyota reliability in a smaller footprint.", image:"toyota_yaris_cross.png" }
+];
+
+const DRIVES = [
+  { tag:"Saturday · 9AM", name:"City & family", note:"Compact SUVs — tight parking, quick errands.", image:"toyota_yaris_cross.png" },
+  { tag:"Saturday · 11AM", name:"Weekend trips", note:"Mid-size SUVs, loaded up and taken out of town.", image:"suzuki_victoris.webp" },
+  { tag:"Saturday · 1PM", name:"First car", note:"Entry models with an instructor riding along.", image:"susuki_brezza.avif" }
+];
+
+const PARTNERS = ["HORIZON FINANCE", "TRIDENT INSURANCE", "ANCHOR CREDIT UNION", "COASTAL AUTO LOANS", "HARBOUR LEASING"];
+
+let activeModelIndex = 0;
+
+const listEl = document.getElementById('model-list');
+MODELS.forEach((m, i) => {
+  const li = document.createElement('li');
+  li.className = 'model-item' + (i === 0 ? ' is-active' : '');
+  li.innerHTML = `<span class="m-name">${m.name}</span><span class="m-type">${m.type}</span>`;
+  li.addEventListener('click', () => setPreview(i));
+  listEl.appendChild(li);
+});
+
+const previewPhoto = document.getElementById('preview-photo');
+const previewImg = document.getElementById('preview-img');
+const previewName = document.getElementById('preview-name');
+const previewPrice = document.getElementById('preview-price');
+const specPower = document.getElementById('spec-power');
+const specSpeed = document.getElementById('spec-speed');
+const specType = document.getElementById('spec-type');
+
+function setPreview(index){
+  activeModelIndex = index;
+  const m = MODELS[index];
+
+  document.querySelectorAll('.model-item').forEach((el, idx) => el.classList.toggle('is-active', idx === index));
+
+  const doSwap = () => {
+    previewPhoto.classList.remove('is-empty');
+    previewPhoto.dataset.label = m.image;
+    previewImg.src = m.image;
+    previewImg.alt = m.name;
+    previewName.textContent = m.name;
+    previewPrice.textContent = m.price;
+    specPower.textContent = m.power;
+    specSpeed.textContent = m.speed;
+    specType.textContent = m.type;
+  };
+
+  if (window.gsap) {
+    gsap.to(previewPhoto, { opacity:0, duration:0.15, onComplete:() => {
+      doSwap();
+      gsap.fromTo(previewPhoto, {opacity:0, y:8}, {opacity:1, y:0, duration:0.28});
+    }});
+  } else {
+    doSwap();
+  }
+}
+setPreview(0);
+
+/* Explore Carousel */
+const exploreTrack = document.getElementById('explore-track');
+MODELS.forEach((m, i) => {
+  exploreTrack.insertAdjacentHTML('beforeend', `
+    <div class="explore-card">
+      <div class="photo-slot" data-label="${m.image}">
+        <img src="${m.image}" alt="${m.name}" loading="lazy" onerror="this.closest('.photo-slot').classList.add('is-empty')">
+      </div>
+      <div class="explore-card-body">
+        <h4>${m.name}</h4>
+        <p>${m.blurb}</p>
+        <a href="#showroom" onclick="setPreview(${i})">Learn more</a>
+      </div>
+    </div>`);
+});
+
+let exploreIndex = 0;
+function goToExplore(i){
+  exploreIndex = (i + MODELS.length) % MODELS.length;
+  exploreTrack.style.transform = `translateX(-${exploreIndex * 100}%)`;
+}
+document.getElementById('explore-prev').addEventListener('click', () => goToExplore(exploreIndex - 1));
+document.getElementById('explore-next').addEventListener('click', () => goToExplore(exploreIndex + 1));
+
+/* Drive section setup */
+const track = document.getElementById('drive-track');
+const fallback = document.getElementById('drive-fallback');
+DRIVES.forEach(d => {
+  const html = `<div class="drive-card">
+      <div><div class="tag">${d.tag}</div><h3>${d.name}</h3></div>
+      <div class="photo-slot" data-label="${d.image}">
+        <img src="${d.image}" alt="${d.name}" loading="lazy" onerror="this.closest('.photo-slot').classList.add('is-empty')">
+      </div>
+      <p>${d.note}</p>
+    </div>`;
+  track.insertAdjacentHTML('beforeend', html);
+  fallback.insertAdjacentHTML('beforeend', html);
+});
+track.insertAdjacentHTML('beforeend', '<div style="flex-shrink:0;width:1px;"></div>');
+
+const partnersTrack = document.getElementById('partners-track');
+partnersTrack.innerHTML = [...PARTNERS, ...PARTNERS].map(p => `<span>${p}</span>`).join('');
+
+/* NEW CAMERA CONTROLS API */
+function setCamera(orbit) {
+  const viewer = document.querySelector('model-viewer');
+  viewer.setAttribute('camera-orbit', orbit);
+}
+
+const isDesktop = window.innerWidth >= 900 && matchMedia('(hover:hover) and (pointer:fine)').matches;
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+if (window.gsap && !reduceMotion) {
+  gsap.registerPlugin(ScrollTrigger);
+
+  /* subtle hero background parallax — bg drifts slower than the scroll itself */
+  gsap.to('.hero-bg', {
+    yPercent: 10,
+    ease: 'none',
+    scrollTrigger: {
+      trigger: '.hero',
+      start: 'top top',
+      end: 'bottom top',
+      scrub: true
+    }
+  });
+
+  gsap.timeline({ defaults:{ ease:'power3.out' } })
+    .from('#hero-h1', { y:26, opacity:0, duration:0.7 })
+    .from('.hero-sub', { y:16, opacity:0, duration:0.6 }, '-=0.4')
+    .from('.hero .btn-primary', { y:12, opacity:0, duration:0.5 }, '-=0.35')
+    .from('.hero-bottom-row', { opacity:0, y:16, duration:0.6 }, '-=0.3');
+
+  if (isDesktop) {
+    const trackWidth = track.scrollWidth;
+    gsap.to(track, {
+      x: () => -(trackWidth - window.innerWidth + 64),
+      ease: 'none',
+      scrollTrigger: {
+        trigger: '.drive-pin',
+        start: 'top top',
+        end: () => '+=' + (trackWidth - window.innerWidth + 64),
+        scrub: 0.6,
+        pin: true,
+        invalidateOnRefresh: true
+      }
+    });
+  }
+
+  /* NEW SHOWROOM REVEAL STAGGER */
+  gsap.from('.section-head-right', {
+    scrollTrigger: { trigger: '.showroom', start: 'top 80%' },
+    y: 30, opacity: 0, duration: 0.8, immediateRender: false
+  });
+  
+  gsap.from('.showroom-preview', {
+    scrollTrigger: { trigger: '.showroom-grid', start: 'top 75%' },
+    x: -30, opacity: 0, duration: 0.8, immediateRender: false
+  });
+
+  gsap.from('.model-item', {
+    scrollTrigger: { trigger: '.showroom-grid', start: 'top 75%' },
+    x: 30, opacity: 0, duration: 0.6, stagger: 0.1, immediateRender: false
+  });
+
+  /* NEW 3D VIEWER REVEAL */
+  gsap.from('.viewer-container', {
+    scrollTrigger: { trigger: '.moments', start: 'top 70%' },
+    scale: 0.95, opacity: 0, duration: 1, ease: 'expo.out', immediateRender: false
+  });
+
+  gsap.from('.moments-copy > *:not(h2)', {
+    scrollTrigger: { trigger: '.moments', start: 'top 70%' },
+    y: 20, opacity: 0, duration: 0.6, stagger: 0.15, immediateRender: false
+  });
+
+  /* ============================================================
+     Scroll Float — vanilla port of the React ScrollFloat component:
+     splits a heading into per-character spans and scrubs them in
+     (float up + squash/stretch) as the heading scrolls through view.
+     Handles nested markup (e.g. <br>, <em>) via TreeWalker, so it's
+     safe to use on headings that aren't plain text.
+     ============================================================ */
+  function wrapCharsIn(el){
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+    const textNodes = [];
+    let n;
+    while (n = walker.nextNode()) textNodes.push(n);
+    textNodes.forEach(node => {
+      const frag = document.createDocumentFragment();
+      node.textContent.split('').forEach(ch => {
+        const span = document.createElement('span');
+        span.className = 'sf-char';
+        span.textContent = ch === ' ' ? '\u00A0' : ch;
+        frag.appendChild(span);
+      });
+      node.parentNode.replaceChild(frag, node);
+    });
+  }
+
+  function scrollFloat(selector, opts = {}){
+    const {
+      duration = 1,
+      ease = 'back.inOut(2)',
+      scrollStart = 'top 85%',
+      scrollEnd = 'top 55%',
+      stagger = 0.03
+    } = opts;
+    document.querySelectorAll(selector).forEach(el => {
+      wrapCharsIn(el);
+      const chars = el.querySelectorAll('.sf-char');
+      gsap.fromTo(chars,
+        { opacity:0, yPercent:120, scaleY:2.3, scaleX:0.7, transformOrigin:'50% 0%' },
+        {
+          opacity:1, yPercent:0, scaleY:1, scaleX:1,
+          duration, ease, stagger,
+          scrollTrigger: { trigger: el, start: scrollStart, end: scrollEnd, scrub: true }
+        }
+      );
+    });
+  }
+
+  scrollFloat('.section-head h2');
+  scrollFloat('.drive-head h2', { scrollStart: 'top 90%', scrollEnd: 'top 40%' });
+  scrollFloat('.moments-copy h2');
+}
+</script>
+</body>
+</html>
