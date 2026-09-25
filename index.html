@@ -27,7 +27,6 @@
     --line-strong: rgba(243,240,233,0.22);
   }
   *{box-sizing:border-box;}
-  html{scroll-behavior:smooth;}
   body{
     margin:0;background:var(--bg);color:var(--ink);
     font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden;
@@ -44,39 +43,113 @@
   /* ---------- SCROLL FLOAT (per-character scroll-scrubbed reveal) ---------- */
   .sf-char{display:inline-block;will-change:transform,opacity;}
 
+  /* Lenis smooth-scroll — required housekeeping CSS from the library's docs */
+  html.lenis, html.lenis body{height:auto;}
+  .lenis.lenis-smooth{scroll-behavior:auto;}
+  .lenis.lenis-smooth [data-lenis-prevent]{overscroll-behavior:contain;}
+  .lenis.lenis-stopped{overflow:hidden;}
+  .lenis.lenis-scrolling iframe{pointer-events:none;}
+
   .wrap{max-width:1240px;margin:0 auto;padding:0 32px;}
   @media (max-width:640px){.wrap{padding:0 20px;}}
 
   /* ---------- NAV ---------- */
   header{
     position:sticky;top:0;z-index:40;
-    background:rgba(14,14,15,0.82);backdrop-filter:blur(10px);
-    border-bottom:1px solid var(--line);
+    background:transparent;backdrop-filter:blur(0px);
+    border-bottom:1px solid transparent;
+    transition:background .4s ease, backdrop-filter .4s ease, border-color .4s ease;
   }
+  header.is-scrolled{
+    background:rgba(14,14,15,0.82);backdrop-filter:blur(10px);
+    border-bottom-color:var(--line);
+  }
+  .scroll-progress{position:absolute;left:0;bottom:-1px;height:2px;width:0%;background:var(--brass);}
+
   nav{display:flex;align-items:center;justify-content:space-between;padding:20px 0;}
   .logo{
     font-family:'Cider Gum','Barlow Condensed',sans-serif;
     font-weight:400;font-size:20px;letter-spacing:0.02em;
     display:flex;align-items:center;gap:9px;
   }
-  .logo .mark{width:11px;height:11px;background:var(--brass);transform:rotate(45deg);}
-  .nav-links{display:flex;gap:34px;font-size:15px;color:var(--ink-dim);}
+  .logo .mark{
+    width:11px;height:11px;background:var(--brass);transform:rotate(45deg);
+    transition:transform .4s cubic-bezier(.34,1.56,.64,1), box-shadow .4s ease;
+  }
+  .logo:hover .mark{transform:rotate(225deg) scale(1.25);box-shadow:0 0 12px 1px rgba(201,162,75,0.6);}
+
+  .nav-links{position:relative;display:flex;align-items:center;gap:4px;font-size:15px;color:var(--ink-dim);}
+  .nav-links a{position:relative;z-index:1;padding:9px 16px;border-radius:999px;transition:color .25s ease;}
   .nav-links a:hover{color:var(--ink);}
+  .nav-indicator{
+    position:absolute;top:50%;left:0;width:0;height:34px;
+    transform:translateY(-50%);border-radius:999px;
+    background:rgba(201,162,75,0.12);border:1px solid rgba(201,162,75,0.4);
+    opacity:0;pointer-events:none;
+    transition:left .3s cubic-bezier(.22,1,.36,1), width .3s cubic-bezier(.22,1,.36,1), opacity .2s ease;
+  }
+  .nav-links.is-hovering .nav-indicator{opacity:1;}
+
   .nav-cta{
+    position:relative;overflow:hidden;
     font-size:14px;font-weight:600;padding:11px 20px;
     border:1px solid var(--line-strong);border-radius:2px;
     transition:border-color .2s, background .2s;
   }
   .nav-cta:hover{border-color:var(--brass);background:rgba(201,162,75,0.08);}
-  @media (max-width:800px){ .nav-links{display:none;} }
+  .nav-cta::before{
+    content:"";position:absolute;top:0;left:-60%;width:35%;height:100%;
+    background:linear-gradient(120deg, transparent, rgba(255,255,255,0.35), transparent);
+    transform:skewX(-20deg);transition:left .6s ease;
+  }
+  .nav-cta:hover::before{left:130%;}
+
+  .nav-burger{
+    display:none;flex-direction:column;justify-content:center;gap:5px;
+    width:32px;height:32px;background:none;border:none;cursor:pointer;padding:0;
+  }
+  .nav-burger span{display:block;height:2px;width:100%;background:var(--ink);transition:transform .3s ease, opacity .3s ease;}
+  .nav-burger.is-open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+  .nav-burger.is-open span:nth-child(2){opacity:0;}
+  .nav-burger.is-open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+
+  .mobile-menu{
+    position:fixed;inset:0;z-index:60;background:rgba(9,9,10,0.98);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;
+    opacity:0;pointer-events:none;transition:opacity .35s ease;
+  }
+  .mobile-menu.is-open{opacity:1;pointer-events:auto;}
+  .mobile-menu a{
+    font-family:'Cider Gum','Barlow Condensed',sans-serif;font-weight:400;
+    font-size:34px;color:var(--ink);transition:color .2s ease;
+  }
+  .mobile-menu a:hover{color:var(--brass);}
+  .mobile-menu .nav-cta{margin-top:12px;}
+  .mobile-close{
+    position:absolute;top:24px;right:24px;width:40px;height:40px;border-radius:50%;
+    background:rgba(255,255,255,0.06);border:1px solid var(--line-strong);color:var(--ink);
+    font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  }
+
+  @media (max-width:800px){
+    .nav-links{display:none;}
+    .nav-burger{display:flex;}
+    nav > .nav-cta{display:none;}
+  }
+  @media (min-width:801px){
+    .mobile-menu, .nav-burger{display:none;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    header, .nav-indicator, .logo .mark, .nav-cta::before, .mobile-menu{transition:none !important;}
+  }
 
   /* ---------- HERO ---------- */
   .hero{position:relative;}
   .hero-media{
-    position:relative;min-height:92vh;overflow:hidden;
+    position:relative;min-height:92vh;min-height:92dvh;overflow:hidden;
     display:flex;align-items:flex-end;
   }
-  .hero-bg{position:absolute;top:-8%;left:0;width:100%;height:116%;object-fit:cover;will-change:transform;}
+  .hero-bg{position:absolute;top:-18%;left:0;width:100%;height:136%;object-fit:cover;will-change:transform;}
   .hero-media.bg-missing{background:linear-gradient(160deg, var(--bg-alt) 0%, var(--bg) 70%);}
   .hero-media.bg-missing .hero-bg{display:none;}
   .hero-overlay{
@@ -212,7 +285,7 @@
 
   .preview-info h3{font-size:32px;}
   .preview-info .price{color:var(--brass);font-size:18px;font-weight:600;margin-top:4px;font-family:'Inter',sans-serif;}
-  .preview-specs{display:flex;gap:28px;margin-top:20px;}
+  .preview-specs{display:flex;flex-wrap:wrap;gap:20px 28px;margin-top:20px;}
   .preview-specs .v{font-family:'Cider Gum','Barlow Condensed',sans-serif;font-weight:400;font-size:20px;color:var(--ink);}
   .preview-specs .k{font-size:12px;color:var(--ink-dim);margin-top:2px;}
 
@@ -333,6 +406,20 @@
     background:linear-gradient(180deg, rgba(14,14,15,0.55) 0%, rgba(14,14,15,0.88) 100%);
   }
   .drive-pin-inner, .drive-track{position:relative;z-index:2;}
+  /* ---------- MOBILE PASS ---------- */
+  @media (max-width:640px){
+    .showroom{padding:72px 0;}
+    .moments{padding:72px 0;}
+    .showroom-preview{padding:24px;min-height:auto;}
+    .preview-photo{height:220px;}
+    .viewer-container model-viewer{height:320px;}
+    .trailer-modal{padding:16px;}
+    .trailer-close{top:12px;right:12px;width:36px;height:36px;}
+    .explore-arrows button{width:36px;height:36px;}
+  }
+  @media (pointer:coarse){
+    .explore-arrows button{width:38px;height:38px;}
+  }
 </style>
 </head>
 <body>
@@ -340,15 +427,29 @@
 <header>
   <nav class="wrap">
     <div class="logo"><span class="mark"></span>GTL Motors</div>
-    <div class="nav-links">
+    <div class="nav-links" id="nav-links">
+      <span class="nav-indicator" id="nav-indicator"></span>
       <a href="#showroom">Showroom</a>
       <a href="#drive">Test drives</a>
       <a href="#moments">3D View</a>
       <a href="#contact">Contact</a>
     </div>
     <a href="#contact" class="nav-cta">Book a test drive</a>
+    <button type="button" class="nav-burger" id="nav-burger" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </button>
   </nav>
+  <div class="scroll-progress" id="scroll-progress"></div>
 </header>
+
+<div class="mobile-menu" id="mobile-menu">
+  <button type="button" class="mobile-close" id="mobile-close" aria-label="Close menu">&times;</button>
+  <a href="#showroom">Showroom</a>
+  <a href="#drive">Test drives</a>
+  <a href="#moments">3D View</a>
+  <a href="#contact">Contact</a>
+  <a href="#contact" class="nav-cta">Book a test drive</a>
+</div>
 
 <section class="hero">
   <div class="hero-media">
@@ -518,7 +619,51 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://unpkg.com/lenis@1/dist/lenis.min.js"></script>
 <script>
+/* ============================================================
+   Nav: scroll-reactive header, hover-tracking link indicator,
+   scroll-progress hairline, and the mobile menu. Plain vanilla —
+   deliberately not dependent on GSAP/Lenis, so it keeps working
+   even if either of those fails to load from CDN.
+   ============================================================ */
+const headerEl = document.querySelector('header');
+const scrollProgressEl = document.getElementById('scroll-progress');
+
+function onScroll(){
+  const y = window.scrollY || document.documentElement.scrollTop;
+  headerEl.classList.toggle('is-scrolled', y > 40);
+  const max = document.documentElement.scrollHeight - window.innerHeight;
+  scrollProgressEl.style.width = (max > 0 ? Math.min(100, (y / max) * 100) : 0) + '%';
+}
+window.addEventListener('scroll', onScroll, { passive: true });
+onScroll();
+
+// hover-tracking pill behind the nav links
+const navLinksEl = document.getElementById('nav-links');
+const navIndicator = document.getElementById('nav-indicator');
+navLinksEl.querySelectorAll('a').forEach(link => {
+  link.addEventListener('mouseenter', () => {
+    navIndicator.style.left = link.offsetLeft + 'px';
+    navIndicator.style.width = link.offsetWidth + 'px';
+    navLinksEl.classList.add('is-hovering');
+  });
+});
+navLinksEl.addEventListener('mouseleave', () => navLinksEl.classList.remove('is-hovering'));
+
+// mobile menu
+const navBurger = document.getElementById('nav-burger');
+const mobileMenu = document.getElementById('mobile-menu');
+function toggleMobileMenu(open){
+  navBurger.classList.toggle('is-open', open);
+  mobileMenu.classList.toggle('is-open', open);
+  document.body.style.overflow = open ? 'hidden' : '';
+}
+navBurger.addEventListener('click', () => toggleMobileMenu(!mobileMenu.classList.contains('is-open')));
+document.getElementById('mobile-close').addEventListener('click', () => toggleMobileMenu(false));
+mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => toggleMobileMenu(false)));
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') toggleMobileMenu(false); });
+
 /* ---------- showroom trailer: silent bg loop + fullscreen-with-sound modal ---------- */
 const trailerModal = document.getElementById('trailer-modal');
 const trailerModalVideo = document.getElementById('trailer-modal-video');
@@ -679,9 +824,21 @@ const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 if (window.gsap && !reduceMotion) {
   gsap.registerPlugin(ScrollTrigger);
 
-  /* subtle hero background parallax — bg drifts slower than the scroll itself */
-  gsap.to('.hero-bg', {
-    yPercent: 10,
+  /* Lenis: smooths/inertias native scroll into a "gliding" feel, synced to
+     GSAP's ticker so every ScrollTrigger-based effect on this page (parallax,
+     pinned drive strip, scroll-float headlines) stays perfectly in step with it. */
+  if (window.Lenis) {
+    const lenis = new Lenis({ lerp: 0.1, smoothWheel: true });
+    lenis.on('scroll', ScrollTrigger.update);
+    gsap.ticker.add((time) => { lenis.raf(time * 1000); });
+    gsap.ticker.lagSmoothing(0);
+  } else {
+    console.warn('Lenis failed to load — smooth scroll disabled, falling back to native scroll.');
+  }
+
+  /* subtle hero background parallax — bg drifts against the scroll itself */
+  gsap.fromTo('.hero-bg', { yPercent: -14 }, {
+    yPercent: 14,
     ease: 'none',
     scrollTrigger: {
       trigger: '.hero',
@@ -767,10 +924,10 @@ if (window.gsap && !reduceMotion) {
   function scrollFloat(selector, opts = {}){
     const {
       duration = 1,
-      ease = 'back.inOut(2)',
-      scrollStart = 'top 85%',
-      scrollEnd = 'top 55%',
-      stagger = 0.03
+      ease = 'power2.out',
+      scrollStart = 'top 92%',
+      scrollEnd = 'top 25%',
+      stagger = 0.04
     } = opts;
     document.querySelectorAll(selector).forEach(el => {
       wrapCharsIn(el);
@@ -780,14 +937,14 @@ if (window.gsap && !reduceMotion) {
         {
           opacity:1, yPercent:0, scaleY:1, scaleX:1,
           duration, ease, stagger,
-          scrollTrigger: { trigger: el, start: scrollStart, end: scrollEnd, scrub: true }
+          scrollTrigger: { trigger: el, start: scrollStart, end: scrollEnd, scrub: 0.6 }
         }
       );
     });
   }
 
   scrollFloat('.section-head h2');
-  scrollFloat('.drive-head h2', { scrollStart: 'top 90%', scrollEnd: 'top 40%' });
+  scrollFloat('.drive-head h2', { scrollStart: 'top 95%', scrollEnd: 'top 20%' });
   scrollFloat('.moments-copy h2');
 }
 </script>
