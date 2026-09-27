@@ -150,6 +150,9 @@
     display:flex;align-items:flex-end;
   }
   .hero-bg{position:absolute;top:-18%;left:0;width:100%;height:136%;object-fit:cover;will-change:transform;}
+  @media (max-width:800px){
+    .hero-bg{top:-4%;height:108%;}
+  }
   .hero-media.bg-missing{background:linear-gradient(160deg, var(--bg-alt) 0%, var(--bg) 70%);}
   .hero-media.bg-missing .hero-bg{display:none;}
   .hero-overlay{
@@ -361,9 +364,19 @@
     border-radius: 4px;
     border: 1px solid var(--line);
     --poster-color: transparent;
+    touch-action: pan-y;
   }
 
   .moments-copy{display:flex;flex-direction:column;justify-content:center;}
+  .viewer-buttons{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;}
+  .viewer-btn{
+    width:38px;height:38px;border-radius:50%;
+    background:rgba(255,255,255,0.04);border:1px solid var(--line-strong);color:var(--ink);
+    font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    transition:border-color .2s, background .2s;
+  }
+  .viewer-btn#viewer-reset{width:auto;border-radius:999px;padding:0 16px;font-size:12px;font-weight:600;}
+  .viewer-btn:hover{border-color:var(--brass);background:rgba(201,162,75,0.1);}
   .moments-copy h2{font-size:clamp(30px,3.6vw,44px);max-width:14ch;}
   .moments-copy p{color:var(--ink-dim);margin-top:18px;line-height:1.7;font-size:16px;max-width:38ch;}
 
@@ -551,13 +564,15 @@
   <div class="wrap moments-grid">
     <div class="viewer-container">
       <model-viewer 
+        id="model-viewer-el"
         src="3d-models/toyota_yaris_cross_2025.glb" 
         ar 
         camera-controls 
         auto-rotate 
         shadow-intensity="1" 
         environment-image="neutral"
-        exposure="1.1">
+        exposure="1.1"
+        data-lenis-prevent>
       </model-viewer>
     </div>
     <div class="moments-copy">
@@ -569,6 +584,14 @@
         <button class="btn-ghost" onclick="setCamera('0deg 75deg 105%')">Front</button>
         <button class="btn-ghost" onclick="setCamera('90deg 75deg 105%')">Profile</button>
         <button class="btn-ghost" onclick="setCamera('45deg 60deg 70%')">Close-up</button>
+      </div>
+
+      <div class="viewer-buttons">
+        <button type="button" class="viewer-btn" id="rotate-left" aria-label="Rotate left">&#8634;</button>
+        <button type="button" class="viewer-btn" id="rotate-right" aria-label="Rotate right">&#8635;</button>
+        <button type="button" class="viewer-btn" id="zoom-out" aria-label="Zoom out">&minus;</button>
+        <button type="button" class="viewer-btn" id="zoom-in" aria-label="Zoom in">&plus;</button>
+        <button type="button" class="viewer-btn" id="viewer-reset" aria-label="Reset view">Reset</button>
       </div>
 
       <a href="#contact" class="btn-primary" style="margin-top:26px; align-self:flex-start;">Book Test Drive</a>
@@ -621,6 +644,13 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 <script src="https://unpkg.com/lenis@1/dist/lenis.min.js"></script>
 <script>
+/* shared across sections below: assigned once Lenis initializes further down */
+let lenisInstance = null;
+function lockScroll(locked){
+  document.body.style.overflow = locked ? 'hidden' : '';
+  if (lenisInstance) { locked ? lenisInstance.stop() : lenisInstance.start(); }
+}
+
 /* ============================================================
    Nav: scroll-reactive header, hover-tracking link indicator,
    scroll-progress hairline, and the mobile menu. Plain vanilla —
@@ -657,7 +687,7 @@ const mobileMenu = document.getElementById('mobile-menu');
 function toggleMobileMenu(open){
   navBurger.classList.toggle('is-open', open);
   mobileMenu.classList.toggle('is-open', open);
-  document.body.style.overflow = open ? 'hidden' : '';
+  lockScroll(open);
 }
 navBurger.addEventListener('click', () => toggleMobileMenu(!mobileMenu.classList.contains('is-open')));
 document.getElementById('mobile-close').addEventListener('click', () => toggleMobileMenu(false));
@@ -697,11 +727,13 @@ document.getElementById('watch-trailer-btn').addEventListener('click', () => {
   trailerModalVideo.currentTime = 0;
   trailerModalVideo.play();
   if (bgVideo) bgVideo.pause();
+  lockScroll(true);
 });
 function closeTrailer(){
   trailerModal.classList.remove('is-open');
   trailerModalVideo.pause();
   if (bgVideo && bgVideoLoaded) bgVideo.play().catch(() => {});
+  lockScroll(false);
 }
 document.getElementById('trailer-close').addEventListener('click', closeTrailer);
 trailerModal.addEventListener('click', (e) => { if (e.target === trailerModal) closeTrailer(); });
@@ -813,10 +845,25 @@ const partnersTrack = document.getElementById('partners-track');
 partnersTrack.innerHTML = [...PARTNERS, ...PARTNERS].map(p => `<span>${p}</span>`).join('');
 
 /* NEW CAMERA CONTROLS API */
-function setCamera(orbit) {
-  const viewer = document.querySelector('model-viewer');
-  viewer.setAttribute('camera-orbit', orbit);
+const DEFAULT_ORBIT = { az: 0, polar: 75, radius: 105 };
+let camState = { ...DEFAULT_ORBIT };
+
+function applyCamState(){
+  const viewer = document.getElementById('model-viewer-el');
+  if (viewer) viewer.setAttribute('camera-orbit', `${camState.az}deg ${camState.polar}deg ${camState.radius}%`);
 }
+function setCamera(orbit) {
+  // presets pass a full "Xdeg Ydeg Z%" string — parse it into camState so the
+  // step buttons continue from wherever a preset left off, instead of jumping
+  const parts = orbit.split(' ').map(p => parseFloat(p));
+  camState = { az: parts[0], polar: parts[1], radius: parts[2] };
+  applyCamState();
+}
+document.getElementById('rotate-left').addEventListener('click', () => { camState.az -= 30; applyCamState(); });
+document.getElementById('rotate-right').addEventListener('click', () => { camState.az += 30; applyCamState(); });
+document.getElementById('zoom-in').addEventListener('click', () => { camState.radius = Math.max(40, camState.radius - 15); applyCamState(); });
+document.getElementById('zoom-out').addEventListener('click', () => { camState.radius = Math.min(160, camState.radius + 15); applyCamState(); });
+document.getElementById('viewer-reset').addEventListener('click', () => { camState = { ...DEFAULT_ORBIT }; applyCamState(); });
 
 const isDesktop = window.innerWidth >= 900 && matchMedia('(hover:hover) and (pointer:fine)').matches;
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -828,25 +875,28 @@ if (window.gsap && !reduceMotion) {
      GSAP's ticker so every ScrollTrigger-based effect on this page (parallax,
      pinned drive strip, scroll-float headlines) stays perfectly in step with it. */
   if (window.Lenis) {
-    const lenis = new Lenis({ lerp: 0.1, smoothWheel: true });
-    lenis.on('scroll', ScrollTrigger.update);
-    gsap.ticker.add((time) => { lenis.raf(time * 1000); });
+    lenisInstance = new Lenis({ lerp: 0.1, smoothWheel: true });
+    lenisInstance.on('scroll', ScrollTrigger.update);
+    gsap.ticker.add((time) => { lenisInstance.raf(time * 1000); });
     gsap.ticker.lagSmoothing(0);
   } else {
     console.warn('Lenis failed to load — smooth scroll disabled, falling back to native scroll.');
   }
 
-  /* subtle hero background parallax — bg drifts against the scroll itself */
-  gsap.fromTo('.hero-bg', { yPercent: -14 }, {
-    yPercent: 14,
-    ease: 'none',
-    scrollTrigger: {
-      trigger: '.hero',
-      start: 'top top',
-      end: 'bottom top',
-      scrub: true
-    }
-  });
+  /* subtle hero background parallax — desktop only; on mobile the scroll
+     distance is short enough that it just reads as image jitter, not depth */
+  if (isDesktop) {
+    gsap.fromTo('.hero-bg', { yPercent: -14 }, {
+      yPercent: 14,
+      ease: 'none',
+      scrollTrigger: {
+        trigger: '.hero',
+        start: 'top top',
+        end: 'bottom top',
+        scrub: true
+      }
+    });
+  }
 
   gsap.timeline({ defaults:{ ease:'power3.out' } })
     .from('#hero-h1', { y:26, opacity:0, duration:0.7 })
